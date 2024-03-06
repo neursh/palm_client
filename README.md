@@ -1,2 +1,2 @@
-# palm_client
-A client for Palm
+# Palm client
+A client implementation for [Palm](https://github.com/Neurs12/palm)
