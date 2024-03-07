@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import "package:socket_io_client/socket_io_client.dart" as sio;
 
@@ -24,12 +26,11 @@ class ClientProvider extends ChangeNotifier {
 
     socket!.on("authorized", (data) {
       authorized = true;
-      notifyListeners();
+      Timer.run(() => notifyListeners());
     });
 
     socket!.on("disconnect", (data) {
       disconnect();
-      notifyListeners();
     });
 
     socket!.connect();
@@ -40,10 +41,10 @@ class ClientProvider extends ChangeNotifier {
   }
 
   disconnect() {
-    socket!.dispose();
+    socket?.dispose();
     socket = null;
     connection = false;
     authorized = false;
-    notifyListeners();
+    Timer.run(() => notifyListeners());
   }
 }
