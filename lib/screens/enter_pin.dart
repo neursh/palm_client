@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:palm_client/client_provider.dart';
+import 'package:palm_client/screens/interact.dart';
 import 'package:provider/provider.dart';
 
 class EnterPin extends StatefulWidget {
@@ -33,37 +34,58 @@ class _EnterPinState extends State<EnterPin> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ClientProvider>(
-      builder: (context, clientProvider, _) => SizedBox(
-        height: 180,
-        width: double.maxFinite,
-        child: Column(
-          children: [
-            Text(
-              widget.name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text("Enter this PIN on your computer:"),
-            Text(
-              pin,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                if (clientProvider.connection) {
-                  clientProvider.disconnect();
-                }
-                SchedulerBinding.instance.addPostFrameCallback(
-                  (_) {
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                );
-              },
-              child: const Text("Cancel"),
-            ),
-          ],
-        ),
-      ),
+      builder: (context, clientProvider, _) {
+        if (clientProvider.authorized) {
+          SchedulerBinding.instance.addPostFrameCallback(
+            (_) {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+          );
+          SchedulerBinding.instance.addPostFrameCallback(
+            (_) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Interact(name: widget.name),
+                ),
+              );
+            },
+          );
+        }
+        return SizedBox(
+          height: 180,
+          width: double.maxFinite,
+          child: Column(
+            children: [
+              Text(
+                widget.name,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text("Enter this PIN on your computer:"),
+              Text(
+                pin,
+                style:
+                    const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              OutlinedButton(
+                onPressed: () {
+                  if (clientProvider.connection) {
+                    clientProvider.disconnect();
+                  }
+                  SchedulerBinding.instance.addPostFrameCallback(
+                    (_) {
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    },
+                  );
+                },
+                child: const Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
