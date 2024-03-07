@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:palm_client/client_provider.dart';
+import 'package:provider/provider.dart';
 
 class Interact extends StatefulWidget {
   final String name;
@@ -12,9 +14,23 @@ class Interact extends StatefulWidget {
 }
 
 class _InteractState extends State<Interact> {
+  late ClientProvider clientProvider;
+
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    clientProvider = Provider.of<ClientProvider>(context, listen: false);
+    super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    clientProvider.disconnect();
+    super.dispose();
   }
 
   @override
