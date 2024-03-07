@@ -37,7 +37,7 @@ class ClientProvider extends ChangeNotifier {
   }
 
   sendKey(KeyInput input) {
-    socket!.emit("input", input.name);
+    socket!.emit("key", input.name);
   }
 
   disconnect() {
