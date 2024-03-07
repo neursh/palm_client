@@ -51,12 +51,13 @@ class _ConnectState extends State<Connect> {
                 enableDrag: false,
                 context: context,
                 builder: (context) => PopScope(
-                    canPop: false,
-                    child: EnterPin(
-                      ip: sv[index].ip.address,
-                      port: 45784,
-                      name: sv[index].name,
-                    )),
+                  canPop: false,
+                  child: EnterPin(
+                    ip: sv[index].ip.address,
+                    port: 45784,
+                    name: sv[index].name,
+                  ),
+                ),
               ),
               child: ListTile(
                 leading: const Icon(Icons.laptop_windows),
