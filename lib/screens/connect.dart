@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:collection/collection.dart';
+import 'enter_pin.dart';
 
 class Connect extends StatefulWidget {
   const Connect({super.key});
@@ -34,22 +37,39 @@ class _ConnectState extends State<Connect> {
         title: const Text("Palm Client"),
       ),
       body: RefreshIndicator(
-          onRefresh: () async {
-            serverSearch.serversList.clear();
-            await Future.delayed(const Duration(seconds: 1));
-          },
-          child: ValueListenableBuilder(
-            builder: (context, sv, __) => ListView.builder(
-              itemBuilder: (context, index) => ListTile(
+        onRefresh: () async {
+          serverSearch.dispose();
+          serverSearch.bind();
+          await Future.delayed(const Duration(seconds: 1));
+        },
+        child: ValueListenableBuilder(
+          builder: (context, sv, __) => ListView.builder(
+            itemBuilder: (context, index) => InkWell(
+              onTap: () => showModalBottomSheet(
+                showDragHandle: true,
+                isDismissible: false,
+                enableDrag: false,
+                context: context,
+                builder: (context) => PopScope(
+                    canPop: false,
+                    child: EnterPin(
+                      ip: sv[index].ip.address,
+                      port: 45784,
+                      name: sv[index].name,
+                    )),
+              ),
+              child: ListTile(
                 leading: const Icon(Icons.laptop_windows),
                 title: Text(sv[index].name),
                 subtitle: Text(sv[index].ip.address),
                 trailing: const Icon(Icons.link),
               ),
-              itemCount: sv.length,
             ),
-            valueListenable: serverSearch.serversList,
-          )),
+            itemCount: sv.length,
+          ),
+          valueListenable: serverSearch.serversList,
+        ),
+      ),
     );
   }
 }
@@ -75,34 +95,39 @@ class ServersMulticast {
     socket.readEventsEnabled = true;
 
     const utf8 = Utf8Codec();
-    socket.listen((RawSocketEvent event) {
-      if (event == RawSocketEvent.read) {
-        final datagram = socket.receive();
-        if (datagram != null && socket.address != datagram.address) {
-          final message = String.fromCharCodes(datagram.data);
-          if (message.startsWith("palm::server::")) {
-            final serverInfo =
-                ServerInfo(name: message.split("::")[2], ip: datagram.address);
-            if (serversList.value.firstWhereOrNull(
-                    (element) => element.ip.address == serverInfo.ip.address) ==
-                null) {
-              serversList.add(ServerInfo(
-                  name: message.split("::")[2], ip: datagram.address));
+    socket.listen(
+      (RawSocketEvent event) {
+        if (event == RawSocketEvent.read) {
+          final datagram = socket.receive();
+          if (datagram != null && socket.address != datagram.address) {
+            final message = String.fromCharCodes(datagram.data);
+            if (message.startsWith("palm::server::")) {
+              final serverInfo = ServerInfo(
+                  name: message.split("::")[2], ip: datagram.address);
+              if (serversList.value.firstWhereOrNull((element) =>
+                      element.ip.address == serverInfo.ip.address) ==
+                  null) {
+                serversList.add(ServerInfo(
+                    name: message.split("::")[2], ip: datagram.address));
+              }
             }
           }
         }
-      }
-    });
+      },
+    );
 
     socket.send(utf8.encode("palm::client"), multicastGroup, port);
-    sendTask = Timer.periodic(const Duration(seconds: 1), (timer) {
-      socket.send(utf8.encode("palm::client"), multicastGroup, port);
-    });
+    sendTask = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        socket.send(utf8.encode("palm::client"), multicastGroup, port);
+      },
+    );
   }
 
   dispose() async {
     sendTask.cancel();
-    serversList.dispose();
+    serversList.clear();
 
     if (Platform.isAndroid) {
       await mutlcastLock.invokeMethod<bool>("release");
